@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Melbourne Travel Planner — 4–12 Sep 2025</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f0f2f5;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:16px}
+.shell{display:flex;flex-direction:column;height:90vh;max-height:820px;width:100%;max-width:1100px;border:1px solid #d1d5db;border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,0.08)}
+.topbar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid #e5e7eb;background:#f9fafb;flex-shrink:0;flex-wrap:wrap}
+.trip-title{font-size:13px;font-weight:600;color:#111827;margin-right:4px;white-space:nowrap}
+.day-tabs{display:flex;gap:4px;flex-wrap:wrap;flex:1}
+.day-btn{font-size:11px;padding:4px 9px;border-radius:20px;border:1px solid #d1d5db;background:transparent;color:#6b7280;cursor:pointer;white-space:nowrap;transition:all 0.15s}
+.day-btn:hover{background:#f3f4f6}
+.day-btn.active{background:#1c2d4a;color:#fff;border-color:#1c2d4a}
+.view-toggle{display:flex;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;flex-shrink:0}
+.view-btn{font-size:11px;padding:5px 12px;border:none;background:transparent;color:#6b7280;cursor:pointer;transition:all 0.15s}
+.view-btn:hover{background:#f3f4f6}
+.view-btn.active{background:#1c2d4a;color:#fff}
+.main{display:flex;flex:1;overflow:hidden}
+.plan-panel{width:52%;border-right:1px solid #e5e7eb;overflow-y:auto;flex-shrink:0;transition:width 0.2s}
+.map-panel{flex:1;overflow:hidden;transition:all 0.2s}
+.day-header{padding:12px 14px 8px;border-bottom:1px solid #e5e7eb;background:#f9fafb;position:sticky;top:0;z-index:2}
+.day-header h2{font-size:14px;font-weight:600;color:#111827}
+.day-header p{font-size:11px;color:#6b7280;margin-top:2px}
+.stop-list{padding:8px 0}
+.stop{display:flex;gap:0;cursor:pointer;transition:background 0.1s}
+.stop:hover{background:#f0f9ff}
+.stop.active-stop{background:#eff6ff}
+.stop-left{display:flex;flex-direction:column;align-items:center;width:44px;flex-shrink:0;padding-top:14px}
+.stop-num{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0}
+.stop-line{width:2px;flex:1;min-height:12px;margin-top:4px;border-radius:1px}
+.stop-body{flex:1;padding:12px 14px 12px 4px;border-bottom:1px solid #f3f4f6}
+.stop:last-child .stop-body{border-bottom:none}
+.stop-time{font-size:11px;color:#9ca3af;margin-bottom:2px}
+.stop-name{font-size:13px;font-weight:600;color:#111827;margin-bottom:3px}
+.stop-detail{font-size:12px;color:#6b7280;line-height:1.5}
+.stop-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.tag{font-size:10px;padding:2px 7px;border-radius:10px;border:1px solid #e5e7eb;color:#6b7280;background:#f9fafb}
+.transport-row{display:flex;align-items:center;gap:6px;padding:3px 14px 3px 54px;font-size:10px;color:#9ca3af;font-style:italic}
+.cost-badge{font-size:10px;padding:2px 7px;border-radius:10px;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;margin-left:auto;white-space:nowrap;flex-shrink:0}
+.map-placeholder{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#f9fafb;padding:24px}
+.map-placeholder .map-icon{width:56px;height:56px;border-radius:14px;background:#e5e7eb;display:flex;align-items:center;justify-content:center}
+.map-placeholder h3{font-size:14px;font-weight:600;color:#374151}
+.map-placeholder p{font-size:12px;color:#6b7280;text-align:center;max-width:280px;line-height:1.6}
+.open-map-btn{font-size:12px;padding:9px 18px;border-radius:8px;border:1px solid #d1d5db;background:#fff;color:#374151;cursor:pointer;font-weight:500;transition:all 0.15s}
+.open-map-btn:hover{background:#f3f4f6;border-color:#9ca3af}
+.map-stops-list{width:100%;max-width:300px}
+.map-stop-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f3f4f6;cursor:pointer;transition:background 0.1s;border-radius:6px;padding:6px 8px}
+.map-stop-item:hover{background:#f0f9ff}
+.map-stop-num{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;flex-shrink:0}
+.map-stop-info{flex:1}
+.map-stop-name{font-size:12px;font-weight:500;color:#374151}
+.map-stop-time{font-size:10px;color:#9ca3af}
+.map-link{font-size:10px;color:#3b82f6;text-decoration:none;margin-left:auto;white-space:nowrap}
+
+/* day color themes */
+.c0{background:#1c2d4a}.c1{background:#1a7a7a}.c2{background:#c44a6a}
+.c3{background:#5c3d7a}.c4{background:#4a5c6a}.c5{background:#3d6b52}
+.c6{background:#c45c4a}.c7{background:#1c2d4a}
+.l0{background:#dde7f0}.l1{background:#d0ebeb}.l2{background:#f5dde5}
+.l3{background:#e8ddf5}.l4{background:#dde5ed}.l5{background:#ddeee3}
+.l6{background:#f5e2de}.l7{background:#dde7f0}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="topbar">
+    <span class="trip-title">🇦🇺 Melbourne 4–12 Sep 2025</span>
+    <div class="day-tabs" id="dayTabs"></div>
+    <div class="view-toggle">
+      <button class="view-btn active" id="vBoth" onclick="setView('both')">⊞ Split</button>
+      <button class="view-btn" id="vPlan" onclick="setView('plan')">≡ Plan</button>
+      <button class="view-btn" id="vMap" onclick="setView('map')">⊙ Map</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="plan-panel" id="planPanel">
+      <div class="day-header">
+        <h2 id="dayTitle"></h2>
+        <p id="daySubtitle"></p>
+      </div>
+      <div class="stop-list" id="stopList"></div>
+    </div>
+    <div class="map-panel" id="mapPanel">
+      <div class="map-placeholder" id="mapPlaceholder">
+        <div class="map-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+            <circle cx="12" cy="9" r="2.5"/>
+          </svg>
+        </div>
+        <h3 id="mapDayTitle">Day stops</h3>
+        <p>Tap any stop to open in Google Maps, or open the full day route below.</p>
+        <button class="open-map-btn" onclick="openDayMap()">Open full day route in Google Maps ↗</button>
+        <div class="map-stops-list" id="mapStopsList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DAYS = [
+  {
+    label:"Day 1",shortDate:"4 Sep",title:"Depart Hong Kong ✈️",subtitle:"Thursday 4 Sep 2025  ·  HX35 · Conf QH510F",color:0,
+    stops:[
+      {time:"21:00",name:"Home → HKG Airport T1",detail:"Check-in counter · allow 2hrs before departure · MTR Airport Express 24min",tags:["MTR Airport Express"],cost:"",lat:22.3080,lng:113.9185},
+      {time:"22:30",name:"Immigration + Departure Gate",detail:"Terminal 1 Departure Hall · duty free browse · gate area",tags:["Flight prep"],cost:"",lat:22.3080,lng:113.9185},
+      {time:"22:55",name:"HX35 Departs HKG",detail:"Economy · 9h 35m · Conf: QH510F · 20kg baggage · arrives MEL 10:30+1",tags:["Flight"],cost:"",lat:22.3080,lng:113.9185},
+    ]
+  },
+  {
+    label:"Day 2",shortDate:"5 Sep",title:"Arrive + St Kilda 🐧",subtitle:"Friday 5 Sep 2025  ·  Brighton Bathing Boxes · Little Penguins",color:1,
+    stops:[
+      {time:"10:30",name:"Arrive MEL Tullamarine",detail:"Immigration + baggage · Terminal 2 International · buy Myki card here",tags:["Airport"],cost:"",lat:-37.6690,lng:144.8410},
+      {time:"11:30",name:"Skybus → Southern Cross Station",detail:"~30 min · AUD 22pp · most direct route to CBD",tags:["Skybus"],cost:"AUD 44",lat:-37.8183,lng:144.9526},
+      {time:"13:00",name:"Space Hotel CBD",detail:"380 Spencer St · check-in from 2pm · luggage storage available · rooftop views",tags:["Hotel"],cost:"~AUD 95/night",lat:-37.8188,lng:144.9525},
+      {time:"15:00",name:"Brighton Bathing Boxes",detail:"Iconic coloured beach huts · Dendy St Beach Brighton · Tram 96 → stop 38",tags:["Tram 96","Free"],cost:"Free",lat:-37.9172,lng:144.9872},
+      {time:"16:30",name:"St Kilda Esplanade + Point Ormond",detail:"Coastal walk · foreshore views · Point Ormond lookout · free",tags:["Walk","Free"],cost:"Free",lat:-37.8676,lng:144.9796},
+      {time:"17:30",name:"Dinner — Acland Street",detail:"Famous cake shops + BYO cafes · many options · ~AUD 25pp",tags:["Food"],cost:"~AUD 50",lat:-37.8674,lng:144.9793},
+      {time:"19:30",name:"Little Penguins — St Kilda Pier",detail:"FREE! Arrive before dusk · penguins emerge at sunset · NO flash photography!",tags:["Wildlife","Free"],cost:"Free",lat:-37.8680,lng:144.9800},
+    ]
+  },
+  {
+    label:"Day 3",shortDate:"6 Sep",title:"Fitzroy + Carlton 🎨",subtitle:"Saturday 6 Sep 2025  ·  Street art · Melbourne Museum · Lygon St",color:2,
+    stops:[
+      {time:"09:00",name:"Breakfast — Brunswick St, Fitzroy",detail:"Best cafe strip in Melbourne · specialty coffee culture",tags:["Cafe","Food"],cost:"~AUD 20",lat:-37.7963,lng:144.9778},
+      {time:"10:00",name:"Fitzroy Street Art Walk",detail:"Hosier Lane · Smith St · Gertrude St murals · all free · self-guided",tags:["Art","Free"],cost:"Free",lat:-37.8145,lng:144.9743},
+      {time:"12:00",name:"Lunch — Lygon Street, Carlton",detail:"Little Italy strip · budget pasta ~AUD 15–20pp · BYO wine",tags:["Food","Italian"],cost:"~AUD 30",lat:-37.7989,lng:144.9670},
+      {time:"13:00",name:"Melbourne Museum + Carlton Gardens",detail:"UNESCO World Heritage · Museum AUD 15pp · beautiful spring gardens",tags:["Museum"],cost:"AUD 30",lat:-37.8032,lng:144.9718},
+      {time:"15:30",name:"Royal Exhibition Building",detail:"Exterior + gardens · historic UNESCO site · free photo stop",tags:["Architecture","Free"],cost:"Free",lat:-37.8044,lng:144.9718},
+      {time:"17:00",name:"Queen Victoria Market",detail:"Browse + snacks · check Sat closing (usually 4pm) · free entry",tags:["Market"],cost:"~AUD 20",lat:-37.8081,lng:144.9571},
+      {time:"19:00",name:"Dinner — CBD Laneways",detail:"Degraves St · Centre Place · Melbourne's iconic laneway dining scene",tags:["Food","Laneways"],cost:"~AUD 50",lat:-37.8149,lng:144.9633},
+    ]
+  },
+  {
+    label:"Day 4",shortDate:"8 Sep",title:"Puffing Billy 🚂",subtitle:"Monday 8 Sep 2025  ·  Steam train · Belgrave → Lakeside · Emerald Lake",color:3,
+    stops:[
+      {time:"08:15",name:"Train: Flinders St → Belgrave",detail:"Cranbourne/Pakenham line → Dandenong → Belgrave · ~1hr 15min · Zone 1+2 Myki",tags:["Train","Myki"],cost:"~AUD 10",lat:-37.8183,lng:144.9671},
+      {time:"10:30",name:"Puffing Billy — Belgrave Station",detail:"PRE-BOOK essential! AUD 64pp return · dangle legs out the carriage side!",tags:["Steam Train"],cost:"AUD 128",lat:-37.9048,lng:145.3558},
+      {time:"11:30",name:"Emerald Lake Park",detail:"Scenic lake · bush walks · picnic area · ducks! · kangaroos sometimes spotted",tags:["Nature","Free"],cost:"Free",lat:-37.9280,lng:145.4420},
+      {time:"13:20",name:"Return: Lakeside → Belgrave",detail:"Return journey included in ticket · check timetable on day",tags:["Steam Train"],cost:"Incl.",lat:-37.9280,lng:145.4420},
+      {time:"16:30",name:"South Melbourne Market",detail:"245 Cecil St · artisan food + produce stalls · check opening hours first",tags:["Market"],cost:"~AUD 20",lat:-37.8327,lng:144.9584},
+      {time:"19:00",name:"Dinner — Southbank Promenade",detail:"Waterfront dining · many options · ~AUD 30–40pp",tags:["Food"],cost:"~AUD 45",lat:-37.8224,lng:144.9632},
+    ]
+  },
+  {
+    label:"Day 5",shortDate:"9 Sep",title:"CBD Deep Dive 🏙️",subtitle:"Tuesday 9 Sep 2025  ·  NGV · Eureka Skydeck · DFO · Rooftop",color:4,
+    stops:[
+      {time:"09:00",name:"Breakfast — Hardware Lane",detail:"Charming outdoor cafe strip · best morning vibe in CBD",tags:["Cafe","Food"],cost:"~AUD 20",lat:-37.8126,lng:144.9618},
+      {time:"10:00",name:"NGV — National Gallery Victoria",detail:"180 St Kilda Rd · free permanent collection · stunning building · always worth a visit",tags:["Gallery","Free"],cost:"Free",lat:-37.8225,lng:144.9690},
+      {time:"11:30",name:"Flinders Street Station + Federation Square",detail:"Iconic architecture · photo stop · Federation Square events + cafes",tags:["Landmark","Free"],cost:"Free",lat:-37.8183,lng:144.9671},
+      {time:"12:00",name:"Lunch — Southbank Promenade",detail:"Waterfront casual dining · riverside views · many options ~AUD 20–30pp",tags:["Food"],cost:"~AUD 35",lat:-37.8224,lng:144.9632},
+      {time:"13:00",name:"Eureka Skydeck 88",detail:"Riverside Quay · 360° views · 88th floor · The Edge glass cube · pre-book online!",tags:["Viewpoint"],cost:"AUD 52",lat:-37.8218,lng:144.9618},
+      {time:"14:30",name:"DFO South Wharf",detail:"180+ outlet stores · great brand discounts · free entry · 10min walk from Skydeck",tags:["Shopping"],cost:"",lat:-37.8250,lng:144.9530},
+      {time:"17:30",name:"Rooftop Sundowner",detail:"Naked in the Sky or Rooftop @ QVM · seasonal hours · ~AUD 15–20 a drink",tags:["Drinks"],cost:"~AUD 25",lat:-37.8090,lng:144.9570},
+      {time:"19:00",name:"Dinner — Chinatown",detail:"Little Bourke St · cheap & great Asian food · ~AUD 20pp",tags:["Food"],cost:"~AUD 30",lat:-37.8121,lng:144.9672},
+    ]
+  },
+  {
+    label:"Day 6",shortDate:"10 Sep",title:"Great Ocean Road Day 1 🌊",subtitle:"Wednesday 10 Sep — Torquay · Bells Beach · Lorne · Apollo Bay",color:5,
+    stops:[
+      {time:"08:00",name:"Depart Melbourne CBD",detail:"Tour pickup or hire car · ~1.5hr via Geelong bypass · rain jacket essential!",tags:["Drive","Tour"],cost:"~AUD 170",lat:-37.8183,lng:144.9671},
+      {time:"09:30",name:"Torquay + Bells Beach",detail:"World-famous surf break · Rip Curl Pro held here · free · walk to beach",tags:["Beach","Free"],cost:"Free",lat:-38.3580,lng:144.3074},
+      {time:"11:00",name:"Aireys Inlet — Eagle Rock + Lighthouse",detail:"Split Point Lighthouse · coastal cliff views · free pullover spot",tags:["Scenic","Free"],cost:"Free",lat:-38.4586,lng:144.0896},
+      {time:"12:00",name:"Lunch — Lorne",detail:"Best fish & chips on the whole road · Mountjoy Parade · ~AUD 15–20pp",tags:["Food","Scenic"],cost:"~AUD 30",lat:-38.5399,lng:143.9784},
+      {time:"13:00",name:"Scenic Drive — Cape Patton Lookout",detail:"Clifftop coastal views · Great Ocean Road at its most dramatic · free pullover",tags:["Scenic","Free"],cost:"Free",lat:-38.6000,lng:143.7500},
+      {time:"15:00",name:"Check-in: Surfside Backpackers",detail:"7 Great Ocean Rd, Apollo Bay · private room · steps from beach · ~AUD 90–100/night",tags:["Hotel"],cost:"~AUD 180",lat:-38.7580,lng:143.6710},
+      {time:"19:00",name:"Dinner — Apollo Bay",detail:"Fresh local seafood · fish & chips or restaurant · ~AUD 25pp",tags:["Food","Seafood"],cost:"~AUD 40",lat:-38.7580,lng:143.6710},
+    ]
+  },
+  {
+    label:"Day 7",shortDate:"11 Sep",title:"12 Apostles + Return 🪨",subtitle:"Thursday 11 Sep — Otway · 12 Apostles · Loch Ard · Back to Melbourne",color:6,
+    stops:[
+      {time:"09:30",name:"Otway Treetop Walk",detail:"Suspended rainforest walkway 25m above ground · AUD 29pp · pre-book at otwayfly.com.au",tags:["Nature"],cost:"AUD 58",lat:-38.7490,lng:143.4990},
+      {time:"11:30",name:"Gibson Steps",detail:"Walk down to beach under limestone cliffs · free · steep stairs · stunning views",tags:["Beach","Free"],cost:"Free",lat:-38.6655,lng:143.0988},
+      {time:"12:30",name:"Lunch — Port Campbell",detail:"Small town near Apostles · fish & chips or cafe · go early — limited seating",tags:["Food"],cost:"~AUD 25",lat:-38.6192,lng:142.9953},
+      {time:"13:30",name:"12 Apostles Viewpoint 🪨",detail:"Most iconic stop! Free entry · walk BOTH east and west platforms for best views",tags:["Landmark","Free"],cost:"Free",lat:-38.6623,lng:143.1052},
+      {time:"15:00",name:"Loch Ard Gorge",detail:"Dramatic gorge + cave · blowhole lookout · The Island Archway · 15min loop walk · free",tags:["Scenic","Free"],cost:"Free",lat:-38.6633,lng:143.0877},
+      {time:"16:00",name:"Return drive to Melbourne",detail:"~3hrs · Geelong bypass · audiobook/music recommended! · arrive ~7pm",tags:["Drive"],cost:"~AUD 30",lat:-37.8183,lng:144.9671},
+      {time:"19:30",name:"Final Night Dinner 🎉",detail:"Celebrate the trip! CBD laneways or Chinatown · splurge a little · ~AUD 40–60pp",tags:["Food","Special"],cost:"~AUD 70",lat:-37.8149,lng:144.9633},
+    ]
+  },
+  {
+    label:"Day 8",shortDate:"12 Sep",title:"Depart Melbourne ✈️",subtitle:"Friday 12 Sep 2025  ·  QVM · Skybus · HX36 12:00 → HKG 19:40",color:7,
+    stops:[
+      {time:"07:00",name:"Breakfast + Checkout",detail:"Space Hotel CBD · check out by 10am · pack all luggage",tags:["Hotel"],cost:"~AUD 15",lat:-37.8188,lng:144.9525},
+      {time:"08:30",name:"Queen Victoria Market — Final Run!",detail:"Opens 6am Fri · Tim Tams · Vegemite · Cadbury · souvenirs for family",tags:["Market","Shopping"],cost:"~AUD 40",lat:-37.8081,lng:144.9571},
+      {time:"10:00",name:"Skybus to MEL Airport",detail:"Southern Cross Station · AUD 22pp · ~35 min · check timetable night before!",tags:["Skybus"],cost:"AUD 44",lat:-37.8183,lng:144.9526},
+      {time:"10:30",name:"Airport Check-in + Duty Free",detail:"MEL Terminal 2 International · HX36 check-in · 20kg bag drop",tags:["Airport"],cost:"",lat:-37.6690,lng:144.8410},
+      {time:"12:00",name:"HX36 Departs MEL ✈️",detail:"9h 40m · Economy · Conf: QH510F · arrives HKG 19:40 · 回到香港！",tags:["Flight"],cost:"",lat:-37.6690,lng:144.8410},
+    ]
+  },
+];
+
+let activeDay = 1;
+let activeView = 'both';
+
+function buildTabs(){
+  const tabs = document.getElementById('dayTabs');
+  DAYS.forEach((d,i)=>{
+    const b = document.createElement('button');
+    b.className = 'day-btn' + (i===activeDay?' active':'');
+    b.textContent = d.label + ' · ' + d.shortDate;
+    b.onclick = ()=>selectDay(i);
+    tabs.appendChild(b);
+  });
+}
+
+function selectDay(i){
+  activeDay = i;
+  document.querySelectorAll('.day-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
+  renderPlan();
+  renderMapPanel();
+}
+
+function renderPlan(){
+  const day = DAYS[activeDay];
+  document.getElementById('dayTitle').textContent = day.title;
+  document.getElementById('daySubtitle').textContent = day.subtitle;
+  const list = document.getElementById('stopList');
+  list.innerHTML = '';
+  day.stops.forEach((s,i)=>{
+    const isLast = i===day.stops.length-1;
+    const row = document.createElement('div');
+    row.className = 'stop';
+    row.innerHTML = `
+      <div class="stop-left">
+        <div class="stop-num c${day.color}">${i+1}</div>
+        ${!isLast?`<div class="stop-line l${day.color}"></div>`:''}
+      </div>
+      <div class="stop-body">
+        <div class="stop-time">${s.time}</div>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+          <div class="stop-name">${s.name}</div>
+          ${s.cost?`<span class="cost-badge">${s.cost}</span>`:''}
+        </div>
+        <div class="stop-detail">${s.detail}</div>
+        <div class="stop-tags">${s.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+      </div>`;
+    row.onclick = ()=>{
+      const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.name+', Melbourne')}`;
+      window.open(url,'_blank');
+    };
+    list.appendChild(row);
+    if(!isLast){
+      const div = document.createElement('div');
+      div.className='transport-row';
+      div.textContent='↓';
+      list.appendChild(div);
+    }
+  });
+}
+
+function renderMapPanel(){
+  const day = DAYS[activeDay];
+  document.getElementById('mapDayTitle').textContent = day.title + ' — ' + day.stops.length + ' stops';
+  const sl = document.getElementById('mapStopsList');
+  sl.innerHTML = '';
+  day.stops.forEach((s,i)=>{
+    const item = document.createElement('div');
+    item.className = 'map-stop-item';
+    item.innerHTML = `
+      <div class="map-stop-num c${day.color}">${i+1}</div>
+      <div class="map-stop-info">
+        <div class="map-stop-name">${s.name}</div>
+        <div class="map-stop-time">${s.time}${s.cost?' · '+s.cost:''}</div>
+      </div>
+      <a class="map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.name+', Melbourne')}" target="_blank">Maps ↗</a>`;
+    sl.appendChild(item);
+  });
+}
+
+function openDayMap(){
+  const day = DAYS[activeDay];
+  const stops = day.stops.filter(s=>s.lat&&s.lng);
+  if(!stops.length) return;
+  const origin = encodeURIComponent(stops[0].lat+','+stops[0].lng);
+  const dest = encodeURIComponent(stops[stops.length-1].lat+','+stops[stops.length-1].lng);
+  const wps = stops.slice(1,-1).map(s=>s.lat+','+s.lng).join('|');
+  let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}`;
+  if(wps) url += `&waypoints=${encodeURIComponent(wps)}`;
+  window.open(url,'_blank');
+}
+
+function setView(v){
+  activeView = v;
+  ['vBoth','vPlan','vMap'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById('v'+v.charAt(0).toUpperCase()+v.slice(1)).classList.add('active');
+  const plan = document.getElementById('planPanel');
+  const map = document.getElementById('mapPanel');
+  if(v==='both'){plan.style.cssText='width:52%;display:';map.style.cssText='flex:1;display:';}
+  else if(v==='plan'){plan.style.cssText='width:100%;display:';map.style.display='none';}
+  else{plan.style.display='none';map.style.cssText='flex:1;display:';}
+}
+
+buildTabs();
+renderPlan();
+renderMapPanel();
+</script>
+</body>
+</html>
